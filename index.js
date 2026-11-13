@@ -71,13 +71,13 @@ app.get('/jobs', async (req, res) => {
   }
 
   if (req.query.search) {
-    query.$or ={
-      type: { $regex: req.query.search, $options: 'i' },
-      category: { $regex: req.query.search, $options: 'i' },
-      company: { $regex: req.query.search, $options: 'i' },
-      location: { $regex: req.query.search, $options: 'i' },
-      isRemote: { $regex: req.query.search, $options: 'i'}
-    }
+    query.$or = [
+      { title: { $regex: req.query.search, $options: 'i' } },
+      { type: { $regex: req.query.search, $options: 'i' } },
+      { category: { $regex: req.query.search, $options: 'i' } },
+      { company: { $regex: req.query.search, $options: 'i' } },
+      { location: { $regex: req.query.search, $options: 'i' } },
+    ]
   }
 
   console.log('query', req.query);
@@ -87,6 +87,10 @@ app.get('/jobs', async (req, res) => {
 
   res.send(result);
 });
+
+
+
+
 
 app.post('/jobs', async (req , res)=>{
   const job = req.body;

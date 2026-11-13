@@ -31,6 +31,7 @@ const database = connectedClient.db("hireloop");
 const users = database.collection("user") // user er collection
 
 const jobs = database.collection("jobs")//jobs er collection 
+const applications = database.collection("applications")//applications er collection
 
 
 app.get("/", (req, res) => {
@@ -90,6 +91,28 @@ app.get('/jobs', async (req, res) => {
 
 
 
+app.get('/jobs/:id', async (req, res) => {
+  const id = req.params.id;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(404).send({
+      message: "Job not found"
+    });
+  }
+
+  const result = await jobs.findOne({
+    _id: new ObjectId(id)
+  });
+
+  if (!result) {
+    return res.status(404).send({
+      message: "Job not found"
+    });
+  }
+
+  res.send(result);
+});
+
 
 
 app.post('/jobs', async (req , res)=>{
@@ -106,6 +129,55 @@ app.delete('/jobs/:id', async (req , res )=>{
   const result = await jobs.deleteOne(query);
   res.send(result)
 })
+
+
+//applications related API
+
+// All applications (optionally filtered: ?userId= for a seeker, ?jobId= for a job post)
+app.get('/applications', async (req, res) => {
+  const query = {};
+
+  if (req.query.userId) {
+    query.userId = req.query.userId;
+  }
+
+  if (req.query.jobId) {
+    query.jobId = req.query.jobId;
+  }
+
+  const cursor = applications.find(query).sort({ appliedAt: -1 });
+  const result = await cursor.toArray();
+  res.send(result);
+});
+
+app.post('/applications', async (req , res)=>{
+  const application = req.body;
+
+  if (!application?.jobId || !application?.userId) {
+    return res.status(400).send({ message: "jobId and userId are required" });
+  }
+
+  // One application per seeker per job
+  const existing = await applications.findOne({
+    jobId: application.jobId,
+    userId: application.userId,
+  });
+
+  if (existing) {
+    return res.status(409).send({ message: "You have already applied to this job" });
+  }
+
+  const doc = {
+    ...application,
+    status: application.status || "Applied",
+    appliedAt: application.appliedAt || new Date().toISOString(),
+  };
+
+  const result = await applications.insertOne(doc);
+  res.send(result);
+})
+
+
 
 app.listen(PORT, () => {
   console.log(`hireloop is looping on ${PORT}`);

@@ -150,6 +150,21 @@ app.get('/applications', async (req, res) => {
   res.send(result);
 });
 
+// akjon user koita job a appalied ase seta dekhabe
+
+app.get('/applications/count', async (req , res)=>{
+  const query = {};
+  if (req.query.applicantId){
+    query.userId = req.query.applicantId;
+  }
+  const result = await applications.countDocuments(query);
+  res.send({ count : result});
+})
+
+
+
+
+
 app.post('/applications', async (req , res)=>{
   const application = req.body;
 
